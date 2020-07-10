@@ -9,6 +9,8 @@ import pandas as pd
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.utils import np_utils
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import cross_val_score
 
 data = pd.read_csv('data/iris.csv')
 
@@ -25,30 +27,24 @@ from sklearn.model_selection import train_test_split
 x_train,x_test,y_train,y_test=train_test_split(X,Y_dummy,train_size=0.75)
 
 
-classificador = Sequential()
+def generate_network():
+    
+    network = Sequential()
+    network.add(Dense(units=4, activation='relu',input_dim=4))
+    # quantidade de neurônios = (atributos+qtdadae de saidas)/2
+    network.add(Dense(units=4, activation='relu'))
+    network.add(Dense(units=3, activation='softmax'))
+    network.compile(optimizer='adam',loss='categorical_crossentropy',
+                          metrics=['categorical_accuracy'])
+    return classificador
 
+network= KerasClassifier(build_fn=generate_network,
+                         batch_size=10,
+                         epochs=100)
 
-classificador.add(Dense(units=4, activation='relu',input_dim=4))
-# quantidade de neurônios = (atributos+qtdadae de saidas)/2
-classificador.add(Dense(units=4, activation='relu'))
-classificador.add(Dense(units=3, activation='softmax'))
-classificador.compile(optimizer='adam',loss='categorical_crossentropy',
-                      metrics=['categorical_accuracy'])
+resultados= cross_val_score(estimator=network,
+                            X=X, y=Y,
+                            cv=10, scoring='accuracy')
 
-classificador.fit(x=x_train,y=y_train,batch_size=10,epochs=1000 )
-
-#teste automático
-resultado= classificador.evaluate(x=x_test,y=y_test)
-
-#teste """manual"""
-previsoes= classificador.predict(x=x_test)
-previsoes=previsoes>0.5
-import numpy as np
-y_test_index=[np.argmax(i) for i in y_test]
-previsoes_index=[np.argmax(i) for i in previsoes]
-
-from sklearn.metrics import confusion_matrix
-
-matrix=confusion_matrix(previsoes_index,y_test_index)
-
-
+media_performance_modelo=resultados.mean()
+std=resultados.std()
