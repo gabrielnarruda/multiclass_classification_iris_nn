@@ -15,14 +15,14 @@ data = pd.read_csv('data/iris.csv')
 X= data.iloc[:,:-1]#.values
 Y=data['class']#.values
 
-#from sklearn.preprocessing import LabelEncoder
-#label_encoder= LabelEncoder()
-#Y=label_encoder.fit_transform(Y)
-#Y_dummy= np_utils.to_categorical(Y)
+from sklearn.preprocessing import LabelEncoder
+label_encoder= LabelEncoder()
+Y=label_encoder.fit_transform(Y)
+Y_dummy= np_utils.to_categorical(Y)
 
 from sklearn.model_selection import train_test_split
 
-x_train,x_test,y_train,y_test=train_test_split(X,Y,train_size=0.75)
+x_train,x_test,y_train,y_test=train_test_split(X,Y_dummy,train_size=0.75)
 
 
 classificador = Sequential()
@@ -37,10 +37,18 @@ classificador.compile(optimizer='adam',loss='categorical_crossentropy',
 
 classificador.fit(x=x_train,y=y_train,batch_size=10,epochs=1000 )
 
-### OBS::: Ao ajustar o modelo aos dados foi encontrado o seguinte erro:
-#ValueError: Error when checking target: expected dense_13 to have shape (3,) but got array with shape (1,)
-#Este erro acontece pois o espaço vetorial de Y deve ser igual à quantidade de outputs ad rede, dessa forma, 
-# acda valor do array Y deve descrever numéricamente  sua relação com todas as classes. Segue exemplo.
-# iris setosa     1 0 0
-# iris virginica  0 1 0
-# iris versicolor 0 0 1
+#teste automático
+resultado= classificador.evaluate(x=x_test,y=y_test)
+
+#teste """manual"""
+previsoes= classificador.predict(x=x_test)
+previsoes=previsoes>0.5
+import numpy as np
+y_test_index=[np.argmax(i) for i in y_test]
+previsoes_index=[np.argmax(i) for i in previsoes]
+
+from sklearn.metrics import confusion_matrix
+
+matrix=confusion_matrix(previsoes_index,y_test_index)
+
+
