@@ -12,6 +12,8 @@ from keras.utils import np_utils
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import cross_val_score
 
+from sklearn.model_selection import GridSearchCV
+
 data = pd.read_csv('data/iris.csv')
 
 X= data.iloc[:,:-1]#.values
@@ -38,13 +40,21 @@ def generate_network():
                           metrics=['categorical_accuracy'])
     return classificador
 
-network= KerasClassifier(build_fn=generate_network,
-                         batch_size=10,
-                         epochs=100)
 
-resultados= cross_val_score(estimator=network,
-                            X=X, y=Y,
-                            cv=10, scoring='accuracy')
+parametros={'batch_size':[10,30],
+            'epochs':[50,100],
+            'optimizer':['adam','sgd'],
+            'loss':['categorical_accuracy','hinge'],
+            'kernel_activation':['random_uniform','normal'],
+            'activation':['relu','tanh'],
+            'neurons':[4,8]}
 
-media_performance_modelo=resultados.mean()
-std=resultados.std()
+network= KerasClassifier(build_fn=generate_network)
+
+grid_search= GridSearchCV(estimator=network, param_grid=parametros)
+
+grid_search=grid_search.fit(X=X,y=Y)
+melhores_parametros = grid_search.best_params_
+melhor_precisao = grid_search.best_score_
+
+
